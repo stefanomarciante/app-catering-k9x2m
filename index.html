@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scardaci Catering - Web App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .header-main { text-align: center; padding: 20px 0; background-color: #fff; border-bottom: 2px solid #ecf0f1; }
+        .header-main img { max-height: 120px; }
+        .header-main h1 { margin: 10px 0 0 0; color: #2c3e50; font-size: 26px; font-weight: normal; }
+        
+        nav { background-color: #2c3e50; padding: 15px; text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        nav button { background: #34495e; border: 1px solid #2c3e50; color: white; font-size: 15px; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        nav button:hover { background: #3498db; }
+        nav button.btn-primary { background: #27ae60; border-color: #2ecc71; }
+        nav button.btn-primary:hover { background: #2ecc71; }
+        
+        .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .view-section { display: none; }
+        .active-view { display: block; }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #ecf0f1; color: #2c3e50; }
+        .totale-row { background-color: #d4e6f1; font-weight: bold; }
+        
+        .btn { background: #3498db; color: #fff; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px; margin-top: 10px; }
+        .btn:hover { background: #2980b9; }
+        .btn-save { background: #27ae60; font-size: 16px; width: 100%; padding: 12px; margin-top: 20px; }
+        .btn-pdf { background: #8e44ad; font-size: 16px; width: 100%; padding: 12px; margin-top: 10px; }
+        .btn-pdf:hover { background: #9b59b6; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-edit { background: #f39c12; }
+        .btn-edit:hover { background: #d35400; }
+        
+        .staff-item { background: #f9f9f9; padding: 15px; margin-top: 10px; border: 1px solid #eee; border-radius: 5px; }
+        .fasi-container { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
+        .fase-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; }
+        .fase-row > div { flex: 1; }
+        .btn-add { background: #2ecc71; margin-top: 10px; font-size: 12px; padding: 6px 10px; }
+        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; }
+        
+        .eventi-passati-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
+        .evento-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .evento-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #2980b9; }
+        .evento-card p { margin: 5px 0; font-size: 14px; color: #666; }
+        .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
+        .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header-main">
+    <img src="scardaci-catering.jpg" alt="Scardaci Catering">
+    <h1>Scardaci Catering - Stagione <span id="anno-corrente"></span></h1>
+</div>
+
+<nav>
+    <button class="btn-primary" onclick="nuovoEventoView()">+ Nuovo Evento</button>
+    <button onclick="switchView('view-archivio')">Archivio Eventi</button>
+    <button onclick="switchView('view-anagrafica')">Anagrafica Personale</button>
+    <button onclick="switchView('view-resoconto')">Resoconto Stagione</button>
+</nav>
+
+<div id="view-eventi" class="container view-section active-view">
+    <h1 id="titolo-sezione-evento">Gestione Evento</h1>
+    <input type="hidden" id="evento-id-edit">
+    
+    <div class="grid-2">
+        <div><label>Nome Evento</label><input type="text" id="evento-nome"></div>
+        <div><label>Luogo</label><input type="text" id="evento-luogo"></div>
+        <div><label>Data</label><input type="date" id="evento-data"></div>
+        <div><label>Coperti</label><input type="number" id="evento-persone" min="1" value="0"></div>
+    </div>
+
+    <h2>Assegnazione Personale</h2>
+    <div id="lista-personale-assegnazione"></div>
+    <button class="btn btn-save" id="btn-salva-evento">Salva Evento nel Database</button>
+    <button class="btn btn-pdf" id="btn-stampa-evento" onclick="esportaPDF()">Stampa / Esporta in PDF</button>
+</div>
+
+<div id="view-archivio" class="container view-section">
+    <h1>Archivio Eventi</h1>
+    <p>Elenco di tutti gli eventi pianificati e archiviati.</p>
+    <div class="eventi-passati-grid" id="griglia-eventi"></div>
+</div>
+
+<div id="view-resoconto" class="container view-section">
+    <h1>Resoconto Stagione Lavorativa</h1>
+    <p>Calcolo totale dei compensi e dei rimborsi accumulati da ogni dipendente su tutti gli eventi registrati.</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Nominativo</th>
+                <th>Totale Compensi (€)</th>
+                <th>Totale Rimb. Auto (€)</th>
+                <th>Totale Pedaggi (€)</th>
+                <th>Guadagno Totale Spettante (€)</th>
+            </tr>
+        </thead>
+        <tbody id="tabella-resoconto"></tbody>
+        <tfoot>
+            <tr class="totale-row">
+                <td style="text-align: right;"><strong>TOTALE STAGIONE:</strong></td>
+                <td id="res-tcomp">€ 0.00</td>
+                <td id="res-tauto">€ 0.00</td>
+                <td id="res-tped">€ 0.00</td>
+                <td id="res-tgen" style="font-size: 16px;">€ 0.00</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div id="view-anagrafica" class="container view-section">
+    <h1>Anagrafica Personale</h1>
+    
+    <div style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; margin-bottom: 20px;">
+        <h3 style="margin-top:0" id="titolo-form-anagrafica">Aggiungi Personale</h3>
+        <input type="hidden" id="ana-id">
+        <div class="grid-4">
+            <div><label>Nome Cognome</label><input type="text" id="ana-nome"></div>
+            <div><label>Ruolo</label><input type="text" id="ana-ruolo"></div>
+            <div><label>Tariffa Prep. (€)</label><input type="number" id="ana-tprep" value="0"></div>
+            <div><label>Tariffa Serv. (€)</label><input type="number" id="ana-tserv" value="0"></div>
+            <div><label>Contratto</label>
+                <select id="ana-fisso">
+                    <option value="true">Fisso</option>
+                    <option value="false">Tornante</option>
+                </select>
+            </div>
+            <div><label>Qualifica</label>
+                <select id="ana-ischef">
+                    <option value="true">Chef (Ha diritto a rimborsi)</option>
+                    <option value="false">Staff (Nessun rimborso)</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-save" style="width: auto; margin-top: 15px;" id="btn-salva-anagrafica">Salva Nominativo</button>
+        <button class="btn" style="background: #95a5a6; margin-left: 10px;" onclick="resetFormAnagrafica()">Annulla</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Ruolo</th>
+                <th>Tipo</th>
+                <th>T. Prep</th>
+                <th>T. Serv</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody id="tabella-anagrafica"></tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCJOqy61wXXU5VnpaOlt9w9upW3XKoIiF4",
+        authDomain: "report-catering.firebaseapp.com",
+        projectId: "report-catering",
+        storageBucket: "report-catering.firebasestorage.app",
+        messagingSenderId: "32570284178",
+        appId: "G-0DGGP0TDGR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let personaleDB = [];
+    const annoCorrente = new Date().getFullYear();
+    document.getElementById('anno-corrente').innerText = annoCorrente;
+
+    window.switchView = function(viewId) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+        document.getElementById(viewId).classList.add('active-view');
+        
+        if(viewId === 'view-anagrafica') caricaAnagrafica();
+        if(viewId === 'view-archivio') caricaEventi();
+        if(viewId === 'view-resoconto') caricaResocontoStagione();
+    };
+
+    window.nuovoEventoView = function() {
+        resetFormEvento();
+        caricaAnagraficaPerEventi();
+        switchView('view-eventi');
+    };
+
+    async function caricaAnagrafica() {
+        const tbody = document.getElementById('tabella-anagrafica');
+        tbody.innerHTML = '<tr><td colspan="6">Caricamento in corso...</td></tr>';
+        const querySnapshot = await getDocs(collection(db, "personale"));
+        personaleDB = [];
+        tbody.innerHTML = '';
+
+        querySnapshot.forEach((docSnap) => {
+            let data = docSnap.data();
+            data.id = docSnap.id;
+            personaleDB.push(data);
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${data.nome}</strong></td>
+                    <td>${data.ruolo}</td>
+                    <td>${data.fisso ? 'Fisso' : 'Tornante'}</td>
+                    <td>€ ${data.tPrep}</td>
+                    <td>€ ${data.tServ}</td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editaPersonale('${data.id}')">Modifica</button>
+                        <button class="btn btn-danger" onclick="eliminaPersonale('${data.id}')">Elimina</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('btn-salva-anagrafica').addEventListener('click', async () => {
+        const id = document.getElementById('ana-id').value;
+        const data = {
+            nome: document.getElementById('ana-nome').value,
+            ruolo: document.getElementById('ana-ruolo').value,
+            tPrep: parseFloat(document.getElementById('ana-tprep').value),
+            tServ: parseFloat(document.getElementById('ana-tserv').value),
+            fisso: document.getElementById('ana-fisso').value === 'true',
+            isChef: document.getElementById('ana-ischef').value === 'true'
+        };
+
+        if(!data.nome || !data.ruolo) return alert("Compila nome e ruolo.");
+
+        if (id) {
+            await updateDoc(doc(db, "personale", id), data);
+        } else {
+            await addDoc(collection(db, "personale"), data);
+        }
+        resetFormAnagrafica();
+        caricaAnagrafica();
+    });
+
+    window.editaPersonale = function(id) {
+        const p = personaleDB.find(x => x.id === id);
+        document.getElementById('ana-id').value = p.id;
+        document.getElementById('ana-nome').value = p.nome;
+        document.getElementById('ana-ruolo').value = p.ruolo;
+        document.getElementById('ana-tprep').value = p.tPrep;
+        document.getElementById('ana-tserv').value = p.tServ;
+        document.getElementById('ana-fisso').value = p.fisso ? 'true' : 'false';
+        document.getElementById('ana-ischef').value = p.isChef ? 'true' : 'false';
+        document.getElementById('titolo-form-anagrafica').innerText = "Modifica Nominativo";
+    };
+
+    window.eliminaPersonale = async function(id) {
+        if(confirm("Sei sicuro di voler eliminare questo nominativo?")) {
+            await deleteDoc(doc(db, "personale", id));
+            caricaAnagrafica();
+        }
+    };
+
+    window.resetFormAnagrafica = function() {
+        document.getElementById('ana-id').value = '';
+        document.getElementById('ana-nome').value = '';
+        document.getElementById('ana-ruolo').value = '';
+        document.getElementById('ana-tprep').value = 0;
+        document.getElementById('ana-tserv').value = 0;
+        document.getElementById('titolo-form-anagrafica').innerText = "Aggiungi Personale";
+    };
+
+    async function caricaAnagraficaPerEventi() {
+        const cont = document.getElementById('lista-personale-assegnazione');
+        if (personaleDB.length === 0) {
+            const querySnapshot = await getDocs(collection(db, "personale"));
+            querySnapshot.forEach(docSnap => {
+                let d = docSnap.data(); d.id = docSnap.id;
+                personaleDB.push(d);
+            });
+        }
+        
+        cont.innerHTML = '';
+        personaleDB.forEach(membro => {
+            cont.innerHTML += `
+                <div class="staff-item">
+                    <div class="staff-header">
+                        <label><input type="checkbox" id="check-${membro.id}" class="check-membro" data-id="${membro.id}" data-ischef="${membro.isChef}"> ${membro.nome} - <em>${membro.ruolo}</em></label>
+                    </div>
+                    <div class="fasi-container" id="container-${membro.id}">
+                        <div id="lista-fasi-${membro.id}"></div>
+                        <button class="btn btn-add" onclick="aggiungiFaseUI('${membro.id}', ${membro.isChef})">+ Aggiungi Turno</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.querySelectorAll('.check-membro').forEach(chk => {
+            chk.addEventListener('change', (e) => {
+                const id = e.target.dataset.id;
+                const container = document.getElementById(`container-${id}`);
+                container.style.display = e.target.checked ? 'block' : 'none';
+                if(e.target.checked && document.getElementById(`lista-fasi-${id}`).children.length === 0) {
+                    aggiungiFaseUI(id, e.target.dataset.ischef === 'true');
+                } else if (!e.target.checked) {
+                    document.getElementById(`lista-fasi-${id}`).innerHTML = '';
+                }
+            });
+        });
+    }
+
+    window.aggiungiFaseUI = function(id, isChef, dati = {}) {
+        const faseId = Date.now() + Math.floor(Math.random() * 1000);
+        const listaFasi = document.getElementById(`lista-fasi-${id}`);
+        const row = document.createElement('div');
+        row.className = 'fase-row';
+        row.id = `riga-${faseId}`;
+
+        let html = `
+            <div><label>Data</label><input type="date" class="input-data-${id}" value="${dati.dataTurno || ''}"></div>
+            <div><label>Fase</label>
+                <select class="input-tipo-${id}">
+                    <option value="Preparazione" ${dati.fase === 'Preparazione' ? 'selected' : ''}>Preparazione</option>
+                    <option value="Servizio" ${dati.fase === 'Servizio' ? 'selected' : ''}>Servizio</option>
+                </select>
+            </div>
+        `;
+
+        if (isChef) {
+            html += `
+                <div><label>Auto (€)</label><input type="number" class="input-auto-${id}" value="${dati.rimborsoAuto || 0}" step="0.5"></div>
+                <div><label>Pedaggio (€)</label><input type="number" class="input-pedaggio-${id}" value="${dati.pedaggio || 0}" step="0.5"></div>
+            `;
+        }
+
+        html += `<div><button class="btn btn-remove" onclick="document.getElementById('riga-${faseId}').remove()">X</button></div>`;
+        row.innerHTML = html;
+        listaFasi.appendChild(row);
+    }
+
+    async function caricaEventi() {
+        const griglia = document.getElementById('griglia-eventi');
+        griglia.innerHTML = '<p>Caricamento eventi in corso...</p>';
+        
+        const q = query(collection(db, "eventi"), orderBy("data", "desc"));
+        const snapshot = await getDocs(q);
+        
+        griglia.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const ev = docSnap.data();
+            const idEv = docSnap.id;
+            
+            griglia.innerHTML += `
+                <div class="evento-card">
+                    <h3>${ev.nome}</h3>
+                    <p><strong>Data:</strong> ${ev.data}</p>
+                    <p><strong>Luogo:</strong> ${ev.luogo}</p>
+                    <p><strong>Coperti:</strong> ${ev.coperti}</p>
+                    <div class="card-actions">
+                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Modifica</button>
+                        <button class="btn btn-pdf" style="background:#8e44ad;" onclick="stampaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Stampa</button>
+                        <button class="btn btn-danger" onclick="eliminaEventoCompletamente('${idEv}')">Elimina</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        if(griglia.innerHTML === '') griglia.innerHTML = '<p>Nessun evento archiviato.</p>';
+    }
+
+    window.modificaDaArchivio = async function(id, nome, luogo, data, coperti) {
+        switchView('view-eventi');
+        await apriEvento(id, nome, luogo, data, coperti);
+    };
+
+    window.stampaDaArchivio = async function(id, nome, luogo, data, coperti) {
+        switchView('view-eventi');
+        await apriEvento(id, nome, luogo, data, coperti);
+        esportaPDF();
+    };
+
+    window.eliminaEventoCompletamente = async function(id) {
+        if(!confirm("ATTENZIONE: Eliminare definitivamente l'evento e tutti i turni / compensi associati?")) return;
+        
+        try {
+            await deleteDoc(doc(db, "eventi", id));
+            const q = query(collection(db, "turni"), where("idEvento", "==", id));
+            const snap = await getDocs(q);
+            const batch = writeBatch(db);
+            snap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            alert("Evento eliminato.");
+            caricaEventi();
+        } catch(e) {
+            console.error(e);
+            alert("Errore durante l'eliminazione.");
+        }
+    };
+
+    window.apriEvento = async function(id, nome, luogo, data, coperti) {
+        if(document.getElementById('lista-personale-assegnazione').innerHTML === '') {
+            await caricaAnagraficaPerEventi();
+        }
+        
+        document.getElementById('evento-id-edit').value = id;
+        document.getElementById('evento-nome').value = nome;
+        document.getElementById('evento-luogo').value = luogo;
+        document.getElementById('evento-data').value = data;
+        document.getElementById('evento-persone').value = coperti;
+        document.getElementById('titolo-sezione-evento').innerText = "Modifica Evento: " + nome;
+        window.scrollTo(0,0);
+
+        document.querySelectorAll('.check-membro').forEach(chk => {
+            chk.checked = false;
+            document.getElementById(`container-${chk.dataset.id}`).style.display = 'none';
+            document.getElementById(`lista-fasi-${chk.dataset.id}`).innerHTML = '';
+        });
+
+        const q = query(collection(db, "turni"), where("idEvento", "==", id));
+        const snapshot = await getDocs(q);
+
+        snapshot.forEach(docSnap => {
+            const turno = docSnap.data();
+            const membroId = turno.idPersonale;
+            const chk = document.getElementById(`check-${membroId}`);
+            
+            if (chk) {
+                chk.checked = true;
+                document.getElementById(`container-${membroId}`).style.display = 'block';
+                const isChef = chk.dataset.ischef === 'true';
+                aggiungiFaseUI(membroId, isChef, turno);
+            }
+        });
+    };
+
+    window.resetFormEvento = function() {
+        document.getElementById('evento-id-edit').value = '';
+        document.getElementById('evento-nome').value = '';
+        document.getElementById('evento-luogo').value = '';
+        document.getElementById('evento-data').value = '';
+        document.getElementById('evento-persone').value = 0;
+        document.getElementById('titolo-sezione-evento').innerText = "Nuovo Evento";
+        
+        document.querySelectorAll('.check-membro').forEach(chk => {
+            chk.checked = false;
+            document.getElementById(`container-${chk.dataset.id}`).style.display = 'none';
+            document.getElementById(`lista-fasi-${chk.dataset.id}`).innerHTML = '';
+        });
+    };
+
+    document.getElementById('btn-salva-evento').addEventListener('click', async () => {
+        const idEdit = document.getElementById('evento-id-edit').value;
+        const nomeEvento = document.getElementById('evento-nome').value;
+        
+        if(!nomeEvento) return alert("Inserisci il nome dell'evento");
+
+        const dataEvento = {
+            nome: nomeEvento,
+            luogo: document.getElementById('evento-luogo').value,
+            data: document.getElementById('evento-data').value,
+            coperti: parseInt(document.getElementById('evento-persone').value) || 0
+        };
+
+        try {
+            let idEventoCorrente = idEdit;
+
+            if (idEdit) {
+                await updateDoc(doc(db, "eventi", idEdit), dataEvento);
+                const q = query(collection(db, "turni"), where("idEvento", "==", idEdit));
+                const oldTurni = await getDocs(q);
+                const batch = writeBatch(db);
+                oldTurni.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+            } else {
+                dataEvento.creatoIl = serverTimestamp();
+                const docRefEvento = await addDoc(collection(db, "eventi"), dataEvento);
+                idEventoCorrente = docRefEvento.id;
+            }
+
+            for (const membro of personaleDB) {
+                const chk = document.getElementById(`check-${membro.id}`);
+                if (chk && chk.checked) {
+                    const righeData = document.querySelectorAll(`.input-data-${membro.id}`);
+                    const righeTipo = document.querySelectorAll(`.input-tipo-${membro.id}`);
+                    
+                    for (let i = 0; i < righeData.length; i++) {
+                        const tipo = righeTipo[i].value;
+                        const compensoFase = tipo === "Preparazione" ? membro.tPrep : membro.tServ;
+                        
+                        let auto = 0, pedaggio = 0;
+                        if (membro.isChef) {
+                            const rAuto = document.querySelectorAll(`.input-auto-${membro.id}`)[i];
+                            const rPed = document.querySelectorAll(`.input-pedaggio-${membro.id}`)[i];
+                            auto = rAuto ? parseFloat(rAuto.value) || 0 : 0;
+                            pedaggio = rPed ? parseFloat(rPed.value) || 0 : 0;
+                        }
+
+                        await addDoc(collection(db, "turni"), {
+                            idEvento: idEventoCorrente,
+                            idPersonale: membro.id,
+                            nomePersonale: membro.nome,
+                            dataTurno: righeData[i].value,
+                            fase: tipo,
+                            compenso: compensoFase,
+                            rimborsoAuto: auto,
+                            pedaggio: pedaggio
+                        });
+                    }
+                }
+            }
+
+            alert(idEdit ? "Evento aggiornato!" : "Nuovo evento e turni salvati!");
+            switchView('view-archivio');
+
+        } catch (e) {
+            console.error(e);
+            alert("Errore nel salvataggio.");
+        }
+    });
+
+    window.esportaPDF = function() {
+        const nomeEvento = document.getElementById('evento-nome').value || "Evento Senza Nome";
+        const luogo = document.getElementById('evento-luogo').value || "-";
+        const dataEv = document.getElementById('evento-data').value || "-";
+        const coperti = document.getElementById('evento-persone').value || "0";
+
+        let righeTabella = '';
+        let totaleAuto = 0;
+        let totalePedaggio = 0;
+        let totaleCompensi = 0;
+        let totaleGenerale = 0;
+
+        personaleDB.forEach(membro => {
+            const chk = document.getElementById(`check-${membro.id}`);
+            if (chk && chk.checked) {
+                const righeData = document.querySelectorAll(`.input-data-${membro.id}`);
+                const righeTipo = document.querySelectorAll(`.input-tipo-${membro.id}`);
+                
+                let empCompenso = 0;
+                let empAuto = 0;
+                let empPedaggio = 0;
+                let dettagliTurni = [];
+                
+                for (let i = 0; i < righeData.length; i++) {
+                    const data = righeData[i].value || "Da definire";
+                    const tipo = righeTipo[i].value;
+                    let auto = 0, pedaggio = 0;
+                    
+                    let compensoFase = tipo === "Preparazione" ? membro.tPrep : membro.tServ;
+                    empCompenso += compensoFase;
+
+                    if (membro.isChef) {
+                        const rAuto = document.querySelectorAll(`.input-auto-${membro.id}`)[i];
+                        const rPed = document.querySelectorAll(`.input-pedaggio-${membro.id}`)[i];
+                        auto = rAuto ? parseFloat(rAuto.value) || 0 : 0;
+                        pedaggio = rPed ? parseFloat(rPed.value) || 0 : 0;
+                        empAuto += auto;
+                        empPedaggio += pedaggio;
+                    }
+
+                    dettagliTurni.push(`${data} <em>(${tipo.substring(0, 4)}.)</em>`);
+                }
+
+                if (righeData.length > 0) {
+                    let empSubtotale = empCompenso + empAuto + empPedaggio;
+                    
+                    totaleCompensi += empCompenso;
+                    totaleAuto += empAuto;
+                    totalePedaggio += empPedaggio;
+                    totaleGenerale += empSubtotale;
+
+                    let turniFormattati = dettagliTurni.join('<br>');
+
+                    righeTabella += `
+                        <tr>
+                            <td><strong>${membro.nome}</strong></td>
+                            <td>${membro.ruolo}</td>
+                            <td>${turniFormattati}</td>
+                            <td>€ ${empCompenso.toFixed(2)}</td>
+                            <td>${membro.isChef ? '€ ' + empAuto.toFixed(2) : '-'}</td>
+                            <td>${membro.isChef ? '€ ' + empPedaggio.toFixed(2) : '-'}</td>
+                            <td style="font-weight: bold; background-color: #f8f9fa;">€ ${empSubtotale.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
+        });
+
+        if (righeTabella === '') {
+            alert("Nessun personale selezionato per generare la stampa.");
+            return;
+        }
+
+        const htmlStampabile = `
+            <!DOCTYPE html>
+            <html lang="it">
+            <head>
+                <title>Riepilogo Catering - ${nomeEvento}</title>
+                <style>
+                    @page { size: A4 landscape; margin: 10mm; }
+                    body { font-family: Arial, sans-serif; color: #333; font-size: 13px; margin: 0; padding: 0; }
+                    .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
+                    .print-header img { max-height: 80px; }
+                    .print-header h1 { margin: 10px 0 0 0; color: #2c3e50; font-size: 22px; font-weight: normal; }
+                    h2 { color: #2c3e50; font-size: 18px; margin: 10px 0 8px 0; }
+                    p { margin: 0 0 15px 0; font-size: 14px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+                    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
+                    th { background-color: #2c3e50; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .totale-row { background-color: #ecf0f1; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .grand-total { background-color: #d4e6f1; font-weight: bold; font-size: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <img src="scardaci-catering.jpg" alt="Scardaci Catering" onload="window.printReady=true" onerror="window.printReady=true">
+                    <h1>Scardaci Catering - Stagione ${annoCorrente}</h1>
+                </div>
+                <h2>Riepilogo Evento: ${nomeEvento}</h2>
+                <p>
+                    <strong>Data Evento:</strong> ${dataEv} &nbsp;&nbsp;|&nbsp;&nbsp; 
+                    <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
+                    <strong>Coperti:</strong> ${coperti}
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operatore</th>
+                            <th>Ruolo</th>
+                            <th>Dettaglio Turni</th>
+                            <th>Totale Compensi</th>
+                            <th>Tot. Rimb. Auto</th>
+                            <th>Tot. Pedaggio</th>
+                            <th>Totale Spettante</th>
+                        </tr>
+                    </thead>
+                    <tbody>${righeTabella}</tbody>
+                    <tfoot>
+                        <tr class="totale-row">
+                            <td colspan="3" style="text-align: right;">Totali Parziali:</td>
+                            <td>€ ${totaleCompensi.toFixed(2)}</td>
+                            <td>€ ${totaleAuto.toFixed(2)}</td>
+                            <td>€ ${totalePedaggio.toFixed(2)}</td>
+                            <td></td>
+                        </tr>
+                        <tr class="grand-total">
+                            <td colspan="6" style="text-align: right; text-transform: uppercase;">Totale Generale Netto (Compensi + Spese):</td>
+                            <td>€ ${totaleGenerale.toFixed(2)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        iframe.contentWindow.printReady = false;
+        doc.write(htmlStampabile);
+        doc.close();
+
+        const checkPrintReady = setInterval(() => {
+            if (iframe.contentWindow.printReady) {
+                clearInterval(checkPrintReady);
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => document.body.removeChild(iframe), 1000);
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            clearInterval(checkPrintReady);
+            if(document.body.contains(iframe)) {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => document.body.removeChild(iframe), 1000);
+            }
+        }, 2000);
+    };
+
+    window.caricaResocontoStagione = async function() {
+        const tbody = document.getElementById('tabella-resoconto');
+        tbody.innerHTML = '<tr><td colspan="5">Calcolo dei dati in corso...</td></tr>';
+        
+        try {
+            const turniSnap = await getDocs(collection(db, "turni"));
+            let stats = {};
+            
+            turniSnap.forEach(d => {
+                let t = d.data();
+                if(!stats[t.idPersonale]) {
+                    stats[t.idPersonale] = { nome: t.nomePersonale, compensi: 0, auto: 0, pedaggio: 0 };
+                }
+                stats[t.idPersonale].compensi += t.compenso || 0;
+                stats[t.idPersonale].auto += t.rimborsoAuto || 0;
+                stats[t.idPersonale].pedaggio += t.pedaggio || 0;
+            });
+            
+            tbody.innerHTML = '';
+            let tComp=0, tAuto=0, tPed=0, tGen=0;
+            
+            for(let id in stats) {
+                let s = stats[id];
+                let tot = s.compensi + s.auto + s.pedaggio;
+                tComp += s.compensi; 
+                tAuto += s.auto; 
+                tPed += s.pedaggio; 
+                tGen += tot;
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${s.nome}</strong></td>
+                        <td>€ ${s.compensi.toFixed(2)}</td>
+                        <td>€ ${s.auto.toFixed(2)}</td>
+                        <td>€ ${s.pedaggio.toFixed(2)}</td>
+                        <td style="background-color: #f8f9fa;"><strong>€ ${tot.toFixed(2)}</strong></td>
+                    </tr>
+                `;
+            }
+            
+            if(tbody.innerHTML === '') {
+                tbody.innerHTML = '<tr><td colspan="5">Nessun turno registrato nella stagione.</td></tr>';
+            }
+
+            document.getElementById('res-tcomp').innerText = `€ ${tComp.toFixed(2)}`;
+            document.getElementById('res-tauto').innerText = `€ ${tAuto.toFixed(2)}`;
+            document.getElementById('res-tped').innerText = `€ ${tPed.toFixed(2)}`;
+            document.getElementById('res-tgen').innerText = `€ ${tGen.toFixed(2)}`;
+            
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5">Errore nel caricamento dei dati.</td></tr>';
+        }
+    };
+
+    nuovoEventoView();
+</script>
+
+</body>
+</html>
