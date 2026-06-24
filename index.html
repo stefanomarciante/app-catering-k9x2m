@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scardaci Catering</title>
     
-    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=3">
-    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=3">
+    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=4">
+    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Scardaci Catering">
@@ -27,8 +27,8 @@
         .view-section { display: none; }
         .active-view { display: block; }
         h1, h2 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
-        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
@@ -49,10 +49,10 @@
         
         .staff-item { background: #f9f9f9; padding: 15px; margin-top: 10px; border: 1px solid #eee; border-radius: 5px; }
         .fasi-container { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
-        .fase-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; }
-        .fase-row > div { flex: 1; }
+        .fase-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; flex-wrap: wrap; }
+        .fase-row > div { flex: 1; min-width: 90px; }
         .btn-add { background: #2ecc71; margin-top: 10px; font-size: 12px; padding: 6px 10px; }
-        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; }
+        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; min-width: 40px !important; flex: 0 !important; }
         
         .eventi-passati-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
         .evento-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -61,7 +61,6 @@
         .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
         .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
 
-        /* REGOLE DI STAMPA NATIVE PER IOS E DESKTOP */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             body { background-color: white; }
@@ -110,8 +109,7 @@
         <button class="btn btn-danger" style="margin: 0; flex: 1; font-size: 18px;" onclick="switchView('view-eventi')">❌ Torna all'Evento</button>
     </div>
     
-    <div id="contenuto-stampa">
-        </div>
+    <div id="contenuto-stampa"></div>
 </div>
 
 <div id="view-archivio" class="container view-section">
@@ -125,10 +123,11 @@
         <thead>
             <tr>
                 <th>Nominativo</th>
-                <th>Totale Compensi (€)</th>
-                <th>Totale Rimb. Auto (€)</th>
-                <th>Totale Pedaggi (€)</th>
-                <th>Guadagno Totale (€)</th>
+                <th>Tot. Compensi Base</th>
+                <th>Tot. Extra</th>
+                <th>Tot. Rimb. Auto</th>
+                <th>Tot. Pedaggi</th>
+                <th>Guadagno Totale Netto</th>
             </tr>
         </thead>
         <tbody id="tabella-resoconto"></tbody>
@@ -136,6 +135,7 @@
             <tr class="totale-row">
                 <td style="text-align: right;"><strong>TOTALE STAGIONE:</strong></td>
                 <td id="res-tcomp">€ 0.00</td>
+                <td id="res-textra">€ 0.00</td>
                 <td id="res-tauto">€ 0.00</td>
                 <td id="res-tped">€ 0.00</td>
                 <td id="res-tgen" style="font-size: 16px;">€ 0.00</td>
@@ -300,6 +300,16 @@
         document.getElementById('titolo-form-anagrafica').innerText = "Aggiungi Personale";
     };
 
+    window.aggiornaCompensoAutomatico = function(selectElem, tPrep, tServ) {
+        const row = selectElem.closest('.fase-row');
+        const inputComp = row.querySelector('input[class^="input-compenso-"]');
+        if(selectElem.value === 'Preparazione') {
+            inputComp.value = tPrep;
+        } else {
+            inputComp.value = tServ;
+        }
+    };
+
     async function caricaAnagraficaPerEventi() {
         const cont = document.getElementById('lista-personale-assegnazione');
         if (personaleDB.length === 0) {
@@ -319,7 +329,7 @@
                     </div>
                     <div class="fasi-container" id="container-${membro.id}">
                         <div id="lista-fasi-${membro.id}"></div>
-                        <button class="btn btn-add" onclick="aggiungiFaseUI('${membro.id}', ${membro.isChef})">+ Aggiungi Turno</button>
+                        <button class="btn btn-add" onclick="aggiungiFaseUI('${membro.id}', ${membro.isChef}, ${membro.tPrep}, ${membro.tServ})">+ Aggiungi Turno</button>
                     </div>
                 </div>
             `;
@@ -328,10 +338,11 @@
         document.querySelectorAll('.check-membro').forEach(chk => {
             chk.addEventListener('change', (e) => {
                 const id = e.target.dataset.id;
+                const membro = personaleDB.find(m => m.id === id);
                 const container = document.getElementById(`container-${id}`);
                 container.style.display = e.target.checked ? 'block' : 'none';
                 if(e.target.checked && document.getElementById(`lista-fasi-${id}`).children.length === 0) {
-                    aggiungiFaseUI(id, e.target.dataset.ischef === 'true');
+                    aggiungiFaseUI(id, membro.isChef, membro.tPrep, membro.tServ);
                 } else if (!e.target.checked) {
                     document.getElementById(`lista-fasi-${id}`).innerHTML = '';
                 }
@@ -339,27 +350,32 @@
         });
     }
 
-    window.aggiungiFaseUI = function(id, isChef, dati = {}) {
+    window.aggiungiFaseUI = function(id, isChef, tPrep, tServ, dati = {}) {
         const faseId = Date.now() + Math.floor(Math.random() * 1000);
         const listaFasi = document.getElementById(`lista-fasi-${id}`);
         const row = document.createElement('div');
         row.className = 'fase-row';
         row.id = `riga-${faseId}`;
 
+        let compensoDefault = dati.fase === 'Servizio' ? tServ : tPrep;
+        if (dati.compenso !== undefined) compensoDefault = dati.compenso;
+
         let html = `
             <div><label>Data</label><input type="date" class="input-data-${id}" value="${dati.dataTurno || ''}"></div>
             <div><label>Fase</label>
-                <select class="input-tipo-${id}">
+                <select class="input-tipo-${id}" onchange="aggiornaCompensoAutomatico(this, ${tPrep}, ${tServ})">
                     <option value="Preparazione" ${dati.fase === 'Preparazione' ? 'selected' : ''}>Preparazione</option>
                     <option value="Servizio" ${dati.fase === 'Servizio' ? 'selected' : ''}>Servizio</option>
                 </select>
             </div>
+            <div><label>Comp. (€)</label><input type="number" class="input-compenso-${id}" value="${compensoDefault}" step="1"></div>
+            <div><label>Extra (€)</label><input type="number" class="input-extra-${id}" value="${dati.extra || 0}" step="1"></div>
         `;
 
         if (isChef) {
             html += `
                 <div><label>Auto (€)</label><input type="number" class="input-auto-${id}" value="${dati.rimborsoAuto || 0}" step="0.5"></div>
-                <div><label>Pedaggio (€)</label><input type="number" class="input-pedaggio-${id}" value="${dati.pedaggio || 0}" step="0.5"></div>
+                <div><label>Ped. (€)</label><input type="number" class="input-pedaggio-${id}" value="${dati.pedaggio || 0}" step="0.5"></div>
             `;
         }
 
@@ -450,8 +466,8 @@
             if (chk) {
                 chk.checked = true;
                 document.getElementById(`container-${membroId}`).style.display = 'block';
-                const isChef = chk.dataset.ischef === 'true';
-                aggiungiFaseUI(membroId, isChef, turno);
+                const membro = personaleDB.find(m => m.id === membroId);
+                aggiungiFaseUI(membroId, membro.isChef, membro.tPrep, membro.tServ, turno);
             }
         });
     };
@@ -505,10 +521,13 @@
                 if (chk && chk.checked) {
                     const righeData = document.querySelectorAll(`.input-data-${membro.id}`);
                     const righeTipo = document.querySelectorAll(`.input-tipo-${membro.id}`);
+                    const righeComp = document.querySelectorAll(`.input-compenso-${membro.id}`);
+                    const righeExtra = document.querySelectorAll(`.input-extra-${membro.id}`);
                     
                     for (let i = 0; i < righeData.length; i++) {
                         const tipo = righeTipo[i].value;
-                        const compensoFase = tipo === "Preparazione" ? membro.tPrep : membro.tServ;
+                        const compensoFase = parseFloat(righeComp[i].value) || 0;
+                        const extraFase = parseFloat(righeExtra[i].value) || 0;
                         
                         let auto = 0, pedaggio = 0;
                         if (membro.isChef) {
@@ -525,6 +544,7 @@
                             dataTurno: righeData[i].value,
                             fase: tipo,
                             compenso: compensoFase,
+                            extra: extraFase,
                             rimborsoAuto: auto,
                             pedaggio: pedaggio
                         });
@@ -551,6 +571,7 @@
         let totaleAuto = 0;
         let totalePedaggio = 0;
         let totaleCompensi = 0;
+        let totaleExtra = 0;
         let totaleGenerale = 0;
 
         personaleDB.forEach(membro => {
@@ -558,8 +579,11 @@
             if (chk && chk.checked) {
                 const righeData = document.querySelectorAll(`.input-data-${membro.id}`);
                 const righeTipo = document.querySelectorAll(`.input-tipo-${membro.id}`);
+                const righeComp = document.querySelectorAll(`.input-compenso-${membro.id}`);
+                const righeExtra = document.querySelectorAll(`.input-extra-${membro.id}`);
                 
                 let empCompenso = 0;
+                let empExtra = 0;
                 let empAuto = 0;
                 let empPedaggio = 0;
                 let dettagliTurni = [];
@@ -567,10 +591,13 @@
                 for (let i = 0; i < righeData.length; i++) {
                     const data = righeData[i].value || "Da definire";
                     const tipo = righeTipo[i].value;
+                    const compensoFase = parseFloat(righeComp[i].value) || 0;
+                    const extraFase = parseFloat(righeExtra[i].value) || 0;
+                    
                     let auto = 0, pedaggio = 0;
                     
-                    let compensoFase = tipo === "Preparazione" ? membro.tPrep : membro.tServ;
                     empCompenso += compensoFase;
+                    empExtra += extraFase;
 
                     if (membro.isChef) {
                         const rAuto = document.querySelectorAll(`.input-auto-${membro.id}`)[i];
@@ -585,8 +612,10 @@
                 }
 
                 if (righeData.length > 0) {
-                    let empSubtotale = empCompenso + empAuto + empPedaggio;
+                    let empSubtotale = empCompenso + empExtra + empAuto + empPedaggio;
+                    
                     totaleCompensi += empCompenso;
+                    totaleExtra += empExtra;
                     totaleAuto += empAuto;
                     totalePedaggio += empPedaggio;
                     totaleGenerale += empSubtotale;
@@ -595,13 +624,14 @@
 
                     righeTabella += `
                         <tr>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;"><strong>${membro.nome}</strong></td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.ruolo}</td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${turniFormattati}</td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${empCompenso.toFixed(2)}</td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.isChef ? '€ ' + empAuto.toFixed(2) : '-'}</td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.isChef ? '€ ' + empPedaggio.toFixed(2) : '-'}</td>
-                            <td style="border: 1px solid #ccc; padding: 8px 10px; font-weight: bold; background-color: #f8f9fa;">€ ${empSubtotale.toFixed(2)}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;"><strong>${membro.nome}</strong></td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">${membro.ruolo}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">${turniFormattati}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${empCompenso.toFixed(2)}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${empExtra.toFixed(2)}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">${membro.isChef ? '€ ' + empAuto.toFixed(2) : '-'}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px;">${membro.isChef ? '€ ' + empPedaggio.toFixed(2) : '-'}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px 8px; font-weight: bold; background-color: #f8f9fa;">€ ${empSubtotale.toFixed(2)}</td>
                         </tr>
                     `;
                 }
@@ -624,16 +654,17 @@
                 <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
                 <strong>Coperti:</strong> ${coperti}
             </p>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.4;">
                 <thead>
                     <tr>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Operatore</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Ruolo</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Dettaglio Turni</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Totale Compensi</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Tot. Rimb. Auto</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Tot. Pedaggio</th>
-                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Totale Spettante</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Operatore</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Ruolo</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Dettaglio Turni</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Comp. Base</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Extra</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Rimb. Auto</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Pedaggio</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Totale Spettante</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -641,14 +672,15 @@
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #ecf0f1; font-weight: bold;">
-                        <td colspan="3" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right;">Totali Parziali:</td>
-                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleCompensi.toFixed(2)}</td>
-                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleAuto.toFixed(2)}</td>
-                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totalePedaggio.toFixed(2)}</td>
-                        <td style="border: 1px solid #ccc; padding: 8px 10px;"></td>
+                        <td colspan="3" style="border: 1px solid #ccc; padding: 6px 8px; text-align: right;">Totali Parziali:</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${totaleCompensi.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${totaleExtra.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${totaleAuto.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${totalePedaggio.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;"></td>
                     </tr>
-                    <tr style="background-color: #d4e6f1; font-weight: bold; font-size: 15px;">
-                        <td colspan="6" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right; text-transform: uppercase;">Totale Generale Netto (Compensi + Spese):</td>
+                    <tr style="background-color: #d4e6f1; font-weight: bold; font-size: 14px;">
+                        <td colspan="7" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right; text-transform: uppercase;">Totale Generale Netto Evento:</td>
                         <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleGenerale.toFixed(2)}</td>
                     </tr>
                 </tfoot>
@@ -661,7 +693,7 @@
 
     window.caricaResocontoStagione = async function() {
         const tbody = document.getElementById('tabella-resoconto');
-        tbody.innerHTML = '<tr><td colspan="5">Calcolo dei dati in corso...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6">Calcolo dei dati in corso...</td></tr>';
         
         try {
             const turniSnap = await getDocs(collection(db, "turni"));
@@ -670,20 +702,22 @@
             turniSnap.forEach(d => {
                 let t = d.data();
                 if(!stats[t.idPersonale]) {
-                    stats[t.idPersonale] = { nome: t.nomePersonale, compensi: 0, auto: 0, pedaggio: 0 };
+                    stats[t.idPersonale] = { nome: t.nomePersonale, compensi: 0, extra: 0, auto: 0, pedaggio: 0 };
                 }
                 stats[t.idPersonale].compensi += t.compenso || 0;
+                stats[t.idPersonale].extra += t.extra || 0;
                 stats[t.idPersonale].auto += t.rimborsoAuto || 0;
                 stats[t.idPersonale].pedaggio += t.pedaggio || 0;
             });
             
             tbody.innerHTML = '';
-            let tComp=0, tAuto=0, tPed=0, tGen=0;
+            let tComp=0, tExtra=0, tAuto=0, tPed=0, tGen=0;
             
             for(let id in stats) {
                 let s = stats[id];
-                let tot = s.compensi + s.auto + s.pedaggio;
+                let tot = s.compensi + s.extra + s.auto + s.pedaggio;
                 tComp += s.compensi; 
+                tExtra += s.extra; 
                 tAuto += s.auto; 
                 tPed += s.pedaggio; 
                 tGen += tot;
@@ -692,6 +726,7 @@
                     <tr>
                         <td><strong>${s.nome}</strong></td>
                         <td>€ ${s.compensi.toFixed(2)}</td>
+                        <td>€ ${s.extra.toFixed(2)}</td>
                         <td>€ ${s.auto.toFixed(2)}</td>
                         <td>€ ${s.pedaggio.toFixed(2)}</td>
                         <td style="background-color: #f8f9fa;"><strong>€ ${tot.toFixed(2)}</strong></td>
@@ -700,17 +735,18 @@
             }
             
             if(tbody.innerHTML === '') {
-                tbody.innerHTML = '<tr><td colspan="5">Nessun turno registrato nella stagione.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6">Nessun turno registrato nella stagione.</td></tr>';
             }
 
             document.getElementById('res-tcomp').innerText = `€ ${tComp.toFixed(2)}`;
+            document.getElementById('res-textra').innerText = `€ ${tExtra.toFixed(2)}`;
             document.getElementById('res-tauto').innerText = `€ ${tAuto.toFixed(2)}`;
             document.getElementById('res-tped').innerText = `€ ${tPed.toFixed(2)}`;
             document.getElementById('res-tgen').innerText = `€ ${tGen.toFixed(2)}`;
             
         } catch(e) {
             console.error(e);
-            tbody.innerHTML = '<tr><td colspan="5">Errore nel caricamento dei dati.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">Errore nel caricamento dei dati.</td></tr>';
         }
     };
 
