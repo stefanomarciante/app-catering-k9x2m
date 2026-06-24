@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scardaci Catering</title>
     
-    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=2">
-    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=2">
+    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=3">
+    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Scardaci Catering">
@@ -61,25 +61,19 @@
         .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
         .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
 
-        /* REGOLE DI STAMPA NATIVE PER IOS/SAFARI */
-        #print-area { display: none; }
-        
-        /* Quando la classe 'is-printing' è attiva sul body, nascondiamo l'app e mostriamo solo il report */
-        body.is-printing { background: white; }
-        body.is-printing > *:not(#print-area) { display: none !important; }
-        body.is-printing #print-area { display: block !important; padding: 15px; }
-
+        /* REGOLE DI STAMPA NATIVE PER IOS E DESKTOP */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
-            body { background: white; }
-            body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; }
+            body { background-color: white; }
+            nav, .header-main, .no-print { display: none !important; }
+            .container { max-width: 100%; box-shadow: none; padding: 0; margin: 0; }
+            .view-section:not(.active-view) { display: none !important; }
+            th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tr { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-
-<div id="print-area"></div>
 
 <div class="header-main">
     <img src="scardaci-catering.jpg" alt="Scardaci Catering">
@@ -107,7 +101,17 @@
     <h2>Assegnazione Personale</h2>
     <div id="lista-personale-assegnazione"></div>
     <button class="btn btn-save" id="btn-salva-evento">Salva Evento nel Database</button>
-    <button class="btn btn-pdf" id="btn-stampa-evento" onclick="esportaPDF()">Stampa / Esporta in PDF</button>
+    <button class="btn btn-pdf" id="btn-stampa-evento" onclick="esportaPDF()">Genera Anteprima di Stampa / PDF</button>
+</div>
+
+<div id="view-stampa" class="container view-section">
+    <div class="no-print" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 20px;">
+        <button class="btn btn-pdf" style="margin: 0; flex: 2; font-size: 18px;" onclick="window.print()">🖨️ Conferma Stampa / Salva PDF</button>
+        <button class="btn btn-danger" style="margin: 0; flex: 1; font-size: 18px;" onclick="switchView('view-eventi')">❌ Torna all'Evento</button>
+    </div>
+    
+    <div id="contenuto-stampa">
+        </div>
 </div>
 
 <div id="view-archivio" class="container view-section">
@@ -209,6 +213,7 @@
         if(viewId === 'view-anagrafica') caricaAnagrafica();
         if(viewId === 'view-archivio') caricaEventi();
         if(viewId === 'view-resoconto') caricaResocontoStagione();
+        window.scrollTo(0,0);
     };
 
     window.nuovoEventoView = function() {
@@ -382,8 +387,7 @@
                     <p><strong>Luogo:</strong> ${ev.luogo}</p>
                     <p><strong>Coperti:</strong> ${ev.coperti}</p>
                     <div class="card-actions">
-                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Modifica</button>
-                        <button class="btn btn-pdf" style="background:#8e44ad;" onclick="stampaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Stampa</button>
+                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Gestisci Evento / Stampa</button>
                         <button class="btn btn-danger" onclick="eliminaEventoCompletamente('${idEv}')">Elimina</button>
                     </div>
                 </div>
@@ -396,12 +400,6 @@
     window.modificaDaArchivio = async function(id, nome, luogo, data, coperti) {
         switchView('view-eventi');
         await apriEvento(id, nome, luogo, data, coperti);
-    };
-
-    window.stampaDaArchivio = async function(id, nome, luogo, data, coperti) {
-        switchView('view-eventi');
-        await apriEvento(id, nome, luogo, data, coperti);
-        esportaPDF();
     };
 
     window.eliminaEventoCompletamente = async function(id) {
@@ -543,7 +541,6 @@
         }
     });
 
-    // Funzione Esporta PDF corretta per iOS Safari
     window.esportaPDF = function() {
         const nomeEvento = document.getElementById('evento-nome').value || "Evento Senza Nome";
         const luogo = document.getElementById('evento-luogo').value || "-";
@@ -612,7 +609,7 @@
         });
 
         if (righeTabella === '') {
-            alert("Nessun personale selezionato per generare la stampa.");
+            alert("Nessun personale assegnato. Impossibile generare il report.");
             return;
         }
 
@@ -658,22 +655,8 @@
             </table>
         `;
 
-        const printArea = document.getElementById('print-area');
-        printArea.innerHTML = htmlStampabile;
-        
-        // Attiviamo la modalità stampa (nasconde l'app, mostra il report)
-        document.body.classList.add('is-printing');
-
-        // Il timeout permette all'iPhone di renderizzare il DOM prima di aprire la finestra PDF
-        setTimeout(() => {
-            window.print();
-        }, 500);
-
-        // Al termine della stampa (o se l'utente annulla), ripristiniamo la visualizzazione normale
-        window.onafterprint = () => {
-            document.body.classList.remove('is-printing');
-            printArea.innerHTML = '';
-        };
+        document.getElementById('contenuto-stampa').innerHTML = htmlStampabile;
+        switchView('view-stampa');
     };
 
     window.caricaResocontoStagione = async function() {
