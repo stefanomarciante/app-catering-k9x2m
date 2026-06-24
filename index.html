@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scardaci Catering - Web App</title>
+    <title>Scardaci Catering</title>
     
-    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg">
-    <link rel="apple-touch-icon" href="scardaci-catering.jpg">
+    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=2">
+    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=2">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Scardaci Catering">
@@ -60,9 +60,19 @@
         .evento-card p { margin: 5px 0; font-size: 14px; color: #666; }
         .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
         .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
+
+        /* REGOLE DI STAMPA NATIVE PER IOS/SAFARI */
+        #print-area { display: none; }
+        @media print {
+            body > :not(#print-area) { display: none !important; }
+            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background: white; color: black; font-family: Arial, sans-serif; }
+            @page { size: A4 landscape; margin: 10mm; }
+        }
     </style>
 </head>
 <body>
+
+<div id="print-area"></div>
 
 <div class="header-main">
     <img src="scardaci-catering.jpg" alt="Scardaci Catering">
@@ -95,14 +105,11 @@
 
 <div id="view-archivio" class="container view-section">
     <h1>Archivio Eventi</h1>
-    <p>Elenco di tutti gli eventi pianificati e archiviati.</p>
     <div class="eventi-passati-grid" id="griglia-eventi"></div>
 </div>
 
 <div id="view-resoconto" class="container view-section">
     <h1>Resoconto Stagione Lavorativa</h1>
-    <p>Calcolo totale dei compensi e dei rimborsi accumulati da ogni dipendente su tutti gli eventi registrati.</p>
-    
     <table>
         <thead>
             <tr>
@@ -110,7 +117,7 @@
                 <th>Totale Compensi (€)</th>
                 <th>Totale Rimb. Auto (€)</th>
                 <th>Totale Pedaggi (€)</th>
-                <th>Guadagno Totale Spettante (€)</th>
+                <th>Guadagno Totale (€)</th>
             </tr>
         </thead>
         <tbody id="tabella-resoconto"></tbody>
@@ -128,7 +135,6 @@
 
 <div id="view-anagrafica" class="container view-section">
     <h1>Anagrafica Personale</h1>
-    
     <div style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; margin-bottom: 20px;">
         <h3 style="margin-top:0" id="titolo-form-anagrafica">Aggiungi Personale</h3>
         <input type="hidden" id="ana-id">
@@ -145,8 +151,8 @@
             </div>
             <div><label>Qualifica</label>
                 <select id="ana-ischef">
-                    <option value="true">Chef (Ha diritto a rimborsi)</option>
-                    <option value="false">Staff (Nessun rimborso)</option>
+                    <option value="true">Chef</option>
+                    <option value="false">Staff</option>
                 </select>
             </div>
         </div>
@@ -575,7 +581,6 @@
 
                 if (righeData.length > 0) {
                     let empSubtotale = empCompenso + empAuto + empPedaggio;
-                    
                     totaleCompensi += empCompenso;
                     totaleAuto += empAuto;
                     totalePedaggio += empPedaggio;
@@ -585,13 +590,13 @@
 
                     righeTabella += `
                         <tr>
-                            <td><strong>${membro.nome}</strong></td>
-                            <td>${membro.ruolo}</td>
-                            <td>${turniFormattati}</td>
-                            <td>€ ${empCompenso.toFixed(2)}</td>
-                            <td>${membro.isChef ? '€ ' + empAuto.toFixed(2) : '-'}</td>
-                            <td>${membro.isChef ? '€ ' + empPedaggio.toFixed(2) : '-'}</td>
-                            <td style="font-weight: bold; background-color: #f8f9fa;">€ ${empSubtotale.toFixed(2)}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;"><strong>${membro.nome}</strong></td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.ruolo}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${turniFormattati}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${empCompenso.toFixed(2)}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.isChef ? '€ ' + empAuto.toFixed(2) : '-'}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px;">${membro.isChef ? '€ ' + empPedaggio.toFixed(2) : '-'}</td>
+                            <td style="border: 1px solid #ccc; padding: 8px 10px; font-weight: bold; background-color: #f8f9fa;">€ ${empSubtotale.toFixed(2)}</td>
                         </tr>
                     `;
                 }
@@ -604,99 +609,51 @@
         }
 
         const htmlStampabile = `
-            <!DOCTYPE html>
-            <html lang="it">
-            <head>
-                <title>Riepilogo Catering - ${nomeEvento}</title>
-                <style>
-                    @page { size: A4 landscape; margin: 10mm; }
-                    body { font-family: Arial, sans-serif; color: #333; font-size: 13px; margin: 0; padding: 0; }
-                    .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
-                    .print-header img { max-height: 80px; }
-                    .print-header h1 { margin: 10px 0 0 0; color: #2c3e50; font-size: 22px; font-weight: normal; }
-                    h2 { color: #2c3e50; font-size: 18px; margin: 10px 0 8px 0; }
-                    p { margin: 0 0 15px 0; font-size: 14px; }
-                    table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
-                    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
-                    th { background-color: #2c3e50; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .totale-row { background-color: #ecf0f1; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .grand-total { background-color: #d4e6f1; font-weight: bold; font-size: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                </style>
-            </head>
-            <body>
-                <div class="print-header">
-                    <img src="scardaci-catering.jpg" alt="Scardaci Catering" onload="window.printReady=true" onerror="window.printReady=true">
-                    <h1>Scardaci Catering - Stagione ${annoCorrente}</h1>
-                </div>
-                <h2>Riepilogo Evento: ${nomeEvento}</h2>
-                <p>
-                    <strong>Data Evento:</strong> ${dataEv} &nbsp;&nbsp;|&nbsp;&nbsp; 
-                    <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
-                    <strong>Coperti:</strong> ${coperti}
-                </p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Operatore</th>
-                            <th>Ruolo</th>
-                            <th>Dettaglio Turni</th>
-                            <th>Totale Compensi</th>
-                            <th>Tot. Rimb. Auto</th>
-                            <th>Tot. Pedaggio</th>
-                            <th>Totale Spettante</th>
-                        </tr>
-                    </thead>
-                    <tbody>${righeTabella}</tbody>
-                    <tfoot>
-                        <tr class="totale-row">
-                            <td colspan="3" style="text-align: right;">Totali Parziali:</td>
-                            <td>€ ${totaleCompensi.toFixed(2)}</td>
-                            <td>€ ${totaleAuto.toFixed(2)}</td>
-                            <td>€ ${totalePedaggio.toFixed(2)}</td>
-                            <td></td>
-                        </tr>
-                        <tr class="grand-total">
-                            <td colspan="6" style="text-align: right; text-transform: uppercase;">Totale Generale Netto (Compensi + Spese):</td>
-                            <td>€ ${totaleGenerale.toFixed(2)}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </body>
-            </html>
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px;">
+                <img src="scardaci-catering.jpg" alt="Scardaci Catering" style="max-height: 80px;">
+                <h1 style="margin: 10px 0 0 0; color: #2c3e50; font-size: 22px; font-weight: normal;">Scardaci Catering - Stagione ${annoCorrente}</h1>
+            </div>
+            <h2 style="color: #2c3e50; font-size: 18px; margin: 10px 0 8px 0;">Riepilogo Evento: ${nomeEvento}</h2>
+            <p style="margin: 0 0 15px 0; font-size: 14px;">
+                <strong>Data Evento:</strong> ${dataEv} &nbsp;&nbsp;|&nbsp;&nbsp; 
+                <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
+                <strong>Coperti:</strong> ${coperti}
+            </p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4;">
+                <thead>
+                    <tr>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Operatore</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Ruolo</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Dettaglio Turni</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Totale Compensi</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Tot. Rimb. Auto</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Tot. Pedaggio</th>
+                        <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 8px 10px; text-align: left;">Totale Spettante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${righeTabella}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #ecf0f1; font-weight: bold;">
+                        <td colspan="3" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right;">Totali Parziali:</td>
+                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleCompensi.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleAuto.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totalePedaggio.toFixed(2)}</td>
+                        <td style="border: 1px solid #ccc; padding: 8px 10px;"></td>
+                    </tr>
+                    <tr style="background-color: #d4e6f1; font-weight: bold; font-size: 15px;">
+                        <td colspan="6" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right; text-transform: uppercase;">Totale Generale Netto (Compensi + Spese):</td>
+                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleGenerale.toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
         `;
 
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = 'none';
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        iframe.contentWindow.printReady = false;
-        doc.write(htmlStampabile);
-        doc.close();
-
-        const checkPrintReady = setInterval(() => {
-            if (iframe.contentWindow.printReady) {
-                clearInterval(checkPrintReady);
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => document.body.removeChild(iframe), 1000);
-            }
-        }, 100);
-        
-        setTimeout(() => {
-            clearInterval(checkPrintReady);
-            if(document.body.contains(iframe)) {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => document.body.removeChild(iframe), 1000);
-            }
-        }, 2000);
+        const printArea = document.getElementById('print-area');
+        printArea.innerHTML = htmlStampabile;
+        window.print();
+        setTimeout(() => { printArea.innerHTML = ''; }, 1000);
     };
 
     window.caricaResocontoStagione = async function() {
