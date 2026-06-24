@@ -47,13 +47,13 @@
         .btn-danger:hover { background: #c0392b; }
         .btn-edit { background: #f39c12; }
         .btn-edit:hover { background: #d35400; }
+        .btn-add { background: #2ecc71; margin-top: 10px; font-size: 12px; padding: 6px 10px; }
+        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; }
         
         .staff-item { background: #f9f9f9; padding: 15px; margin-top: 10px; border: 1px solid #eee; border-radius: 5px; }
         .fasi-container { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
-        .fase-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; }
-        .fase-row > div { flex: 1; }
-        .btn-add { background: #2ecc71; margin-top: 10px; font-size: 12px; padding: 6px 10px; }
-        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; }
+        .fase-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; flex-wrap: wrap; }
+        .fase-row > div { flex: 1; min-width: 90px; }
         
         .eventi-passati-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
         .evento-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -62,7 +62,6 @@
         .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
         .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
 
-        /* REGOLE DI STAMPA NATIVE PER IOS E DESKTOP */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             body { background-color: white; }
@@ -95,8 +94,14 @@
     <div class="grid-2">
         <div><label>Nome Evento</label><input type="text" id="evento-nome"></div>
         <div><label>Luogo</label><input type="text" id="evento-luogo"></div>
-        <div><label>Data</label><input type="date" id="evento-data"></div>
     </div>
+    
+    <div style="margin-top: 15px; background: #fdfdfd; padding: 15px; border: 1px solid #eef0f2; border-radius: 5px;">
+        <label style="margin-top: 0;">Date dello Svolgimento Evento</label>
+        <div id="container-date-evento" style="margin-top: 5px;"></div>
+        <button type="button" class="btn btn-add" onclick="aggiungiDataEventoUI()">+ Aggiungi Data</button>
+    </div>
+    
     <div class="grid-3" style="margin-top: 15px;">
         <div><label>Coperti (Adulti)</label><input type="number" id="evento-persone" min="0" value="0"></div>
         <div><label>Bambini</label><input type="number" id="evento-bambini" min="0" value="0"></div>
@@ -114,9 +119,7 @@
         <button class="btn btn-pdf" style="margin: 0; flex: 2; font-size: 18px;" onclick="window.print()">🖨️ Conferma Stampa / Salva PDF</button>
         <button class="btn btn-danger" style="margin: 0; flex: 1; font-size: 18px;" onclick="switchView('view-eventi')">❌ Torna all'Evento</button>
     </div>
-    
-    <div id="contenuto-stampa">
-        </div>
+    <div id="contenuto-stampa"></div>
 </div>
 
 <div id="view-archivio" class="container view-section">
@@ -210,6 +213,7 @@
     const db = getFirestore(app);
 
     let personaleDB = [];
+    let eventiDB = [];
     const annoCorrente = new Date().getFullYear();
     document.getElementById('anno-corrente').innerText = annoCorrente;
 
@@ -227,6 +231,21 @@
         resetFormEvento();
         caricaAnagraficaPerEventi();
         switchView('view-eventi');
+    };
+
+    window.aggiungiDataEventoUI = function(valore = '') {
+        const container = document.getElementById('container-date-evento');
+        const rowId = Date.now() + Math.floor(Math.random() * 1000);
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.id = `date-row-${rowId}`;
+        div.innerHTML = `
+            <input type="date" class="input-data-evento" value="${valore}" style="flex: 1;">
+            <button type="button" class="btn btn-danger" onclick="document.getElementById('date-row-${rowId}').remove()" style="margin:0; padding:8px 12px; min-width:40px;">X</button>
+        `;
+        container.appendChild(div);
     };
 
     async function caricaAnagrafica() {
@@ -310,23 +329,20 @@
     window.aggiornaCompensoAutomatico = function(selectElem, tPrep, tServ) {
         const row = selectElem.closest('.fase-row');
         const inputComp = row.querySelector('input[class^="input-compenso-"]');
-        if(selectElem.value === 'Preparazione') {
-            inputComp.value = tPrep;
-        } else {
-            inputComp.value = tServ;
-        }
+        inputComp.value = selectElem.value === 'Preparazione' ? tPrep : tServ;
     };
 
     async function caricaAnagraficaPerEventi() {
-        const cont = document.getElementById('lista-personale-assegnazione');
         if (personaleDB.length === 0) {
             const querySnapshot = await getDocs(collection(db, "personale"));
+            personaleDB = [];
             querySnapshot.forEach(docSnap => {
                 let d = docSnap.data(); d.id = docSnap.id;
                 personaleDB.push(d);
             });
         }
         
+        const cont = document.getElementById('lista-personale-assegnazione');
         cont.innerHTML = '';
         personaleDB.forEach(membro => {
             cont.innerHTML += `
@@ -398,20 +414,24 @@
         const q = query(collection(db, "eventi"), orderBy("data", "desc"));
         const snapshot = await getDocs(q);
         
+        eventiDB = [];
         griglia.innerHTML = '';
         snapshot.forEach(docSnap => {
             const ev = docSnap.data();
-            const idEv = docSnap.id;
+            ev.id = docSnap.id;
+            eventiDB.push(ev);
+            
+            const dateMostrate = ev.date ? ev.date.join(' / ') : ev.data;
             
             griglia.innerHTML += `
                 <div class="evento-card">
                     <h3>${ev.nome}</h3>
-                    <p><strong>Data:</strong> ${ev.data}</p>
+                    <p><strong>Date:</strong> ${dateMostrate}</p>
                     <p><strong>Luogo:</strong> ${ev.luogo}</p>
                     <p><strong>Coperti:</strong> ${ev.coperti} Adulti, ${ev.bambini || 0} Bambini, ${ev.staffEsterno || 0} Staff</p>
                     <div class="card-actions">
-                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti}, ${ev.bambini || 0}, ${ev.staffEsterno || 0})">Gestisci Evento / Stampa</button>
-                        <button class="btn btn-danger" onclick="eliminaEventoCompletamente('${idEv}')">Elimina</button>
+                        <button class="btn btn-edit" onclick="modificaDaArchivio('${ev.id}')">Gestisci / Stampa</button>
+                        <button class="btn btn-danger" onclick="eliminaEventoCompletamente('${ev.id}')">Elimina</button>
                     </div>
                 </div>
             `;
@@ -420,14 +440,13 @@
         if(griglia.innerHTML === '') griglia.innerHTML = '<p>Nessun evento archiviato.</p>';
     }
 
-    window.modificaDaArchivio = async function(id, nome, luogo, data, coperti, bambini, staffEsterno) {
+    window.modificaDaArchivio = function(id) {
         switchView('view-eventi');
-        await apriEvento(id, nome, luogo, data, coperti, bambini, staffEsterno);
+        apriEvento(id);
     };
 
     window.eliminaEventoCompletamente = async function(id) {
-        if(!confirm("ATTENZIONE: Eliminare definitivamente l'evento e tutti i turni / compensi associati?")) return;
-        
+        if(!confirm("Eliminare definitivamente l'evento e tutti i turni associati?")) return;
         try {
             await deleteDoc(doc(db, "eventi", id));
             const q = query(collection(db, "turni"), where("idEvento", "==", id));
@@ -439,27 +458,37 @@
             caricaEventi();
         } catch(e) {
             console.error(e);
-            alert("Errore durante l'eliminazione.");
         }
     };
 
-    window.apriEvento = async function(id, nome, luogo, data, coperti, bambini = 0, staffEsterno = 0) {
-        if(document.getElementById('lista-personale-assegnazione').innerHTML === '') {
-            await caricaAnagraficaPerEventi();
+    window.apriEvento = async function(id) {
+        // Tassativo: Attendiamo la costruzione completa dei checkbox dell'anagrafica per evitare azzeramenti
+        await caricaAnagraficaPerEventi();
+        
+        let ev = eventiDB.find(x => x.id === id);
+        if(!ev) {
+            // Fallback di sicurezza se caricato da link diretto
+            const snap = await getDocs(query(collection(db, "eventi")));
+            snap.forEach(d => { if(d.id === id) ev = {id: d.id, ...d.data()}; });
         }
-        
-        document.getElementById('evento-id-edit').value = id;
-        document.getElementById('evento-nome').value = nome;
-        document.getElementById('evento-luogo').value = luogo;
-        document.getElementById('evento-data').value = data;
-        document.getElementById('evento-persone').value = coperti;
-        document.getElementById('evento-bambini').value = bambini;
-        document.getElementById('evento-staff-ext').value = staffEsterno;
-        
-        document.getElementById('titolo-sezione-evento').innerText = "Modifica Evento: " + nome;
-        document.getElementById('btn-annulla-modifica').style.display = 'block';
-        window.scrollTo(0,0);
 
+        document.getElementById('evento-id-edit').value = ev.id;
+        document.getElementById('evento-nome').value = ev.nome;
+        document.getElementById('evento-luogo').value = ev.luogo;
+        document.getElementById('evento-persone').value = ev.coperti;
+        document.getElementById('evento-bambini').value = ev.bambini || 0;
+        document.getElementById('evento-staff-ext').value = ev.staffEsterno || 0;
+        
+        document.getElementById('container-date-evento').innerHTML = '';
+        if (ev.date && Array.isArray(ev.date)) {
+            ev.date.forEach(d => aggiungiDataEventoUI(d));
+        } else if (ev.data) {
+            aggiungiDataEventoUI(ev.data);
+        }
+
+        document.getElementById('titolo-sezione-evento').innerText = "Modifica Evento: " + ev.nome;
+
+        // Reset e pulizia controlli UI turni prima dell'iniezione dei dati reali
         document.querySelectorAll('.check-membro').forEach(chk => {
             chk.checked = false;
             document.getElementById(`container-${chk.dataset.id}`).style.display = 'none';
@@ -487,14 +516,14 @@
         document.getElementById('evento-id-edit').value = '';
         document.getElementById('evento-nome').value = '';
         document.getElementById('evento-luogo').value = '';
-        document.getElementById('evento-data').value = '';
         document.getElementById('evento-persone').value = 0;
         document.getElementById('evento-bambini').value = 0;
         document.getElementById('evento-staff-ext').value = 0;
-        
         document.getElementById('titolo-sezione-evento').innerText = "Nuovo Evento";
-        document.getElementById('btn-annulla-modifica').style.display = 'none';
         
+        document.getElementById('container-date-evento').innerHTML = '';
+        aggiungiDataEventoUI(); 
+
         document.querySelectorAll('.check-membro').forEach(chk => {
             chk.checked = false;
             document.getElementById(`container-${chk.dataset.id}`).style.display = 'none';
@@ -508,10 +537,17 @@
         
         if(!nomeEvento) return alert("Inserisci il nome dell'evento");
 
+        const nodiDate = document.querySelectorAll('.input-data-evento');
+        let dateArr = [];
+        nodiDate.forEach(input => { if(input.value) dateArr.push(input.value); });
+        
+        if(dateArr.length === 0) return alert("Inserisci almeno una data valida per l'evento.");
+
         const dataEvento = {
             nome: nomeEvento,
             luogo: document.getElementById('evento-luogo').value,
-            data: document.getElementById('evento-data').value,
+            date: dateArr,
+            data: dateArr[0], // Compatibilità ordinamento e archivio
             coperti: parseInt(document.getElementById('evento-persone').value) || 0,
             bambini: parseInt(document.getElementById('evento-bambini').value) || 0,
             staffEsterno: parseInt(document.getElementById('evento-staff-ext').value) || 0
@@ -569,19 +605,24 @@
                 }
             }
 
-            alert(idEdit ? "Evento aggiornato!" : "Nuovo evento e turni salvati!");
+            alert("Dati salvati ed elaborati correttamente!");
             switchView('view-archivio');
 
         } catch (e) {
             console.error(e);
-            alert("Errore nel salvataggio.");
+            alert("Errore durante la scrittura.");
         }
     });
 
     window.esportaPDF = function() {
         const nomeEvento = document.getElementById('evento-nome').value || "Evento Senza Nome";
         const luogo = document.getElementById('evento-luogo').value || "-";
-        const dataEv = document.getElementById('evento-data').value || "-";
+        
+        const nodiDate = document.querySelectorAll('.input-data-evento');
+        let dateArr = [];
+        nodiDate.forEach(input => { if(input.value) dateArr.push(input.value); });
+        const dateEvString = dateArr.join(' / ') || "-";
+
         const coperti = document.getElementById('evento-persone').value || "0";
         const bambini = document.getElementById('evento-bambini').value || "0";
         const staffEsterno = document.getElementById('evento-staff-ext').value || "0";
@@ -632,7 +673,6 @@
 
                 if (righeData.length > 0) {
                     let empSubtotale = empCompenso + empExtra + empAuto + empPedaggio;
-                    
                     totaleCompensi += empCompenso;
                     totaleExtra += empExtra;
                     totaleAuto += empAuto;
@@ -658,7 +698,7 @@
         });
 
         if (righeTabella === '') {
-            alert("Nessun personale assegnato. Impossibile generare il report.");
+            alert("Assegna dei turni prima di visualizzare l'anteprima.");
             return;
         }
 
@@ -669,7 +709,7 @@
             </div>
             <h2 style="color: #2c3e50; font-size: 18px; margin: 10px 0 8px 0;">Riepilogo Evento: ${nomeEvento}</h2>
             <p style="margin: 0 0 15px 0; font-size: 14px;">
-                <strong>Data Evento:</strong> ${dataEv} &nbsp;&nbsp;|&nbsp;&nbsp; 
+                <strong>Date Svolgimento:</strong> ${dateEvString} &nbsp;&nbsp;|&nbsp;&nbsp; 
                 <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
                 <strong>Coperti:</strong> ${coperti} Adulti, ${bambini} Bambini, ${staffEsterno} Staff
             </p>
@@ -686,9 +726,7 @@
                         <th style="background-color: #2c3e50; color: white; border: 1px solid #ccc; padding: 6px 8px; text-align: left;">Totale Spettante</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${righeTabella}
-                </tbody>
+                <tbody>${righeTabella}</tbody>
                 <tfoot>
                     <tr style="background-color: #ecf0f1; font-weight: bold;">
                         <td colspan="3" style="border: 1px solid #ccc; padding: 6px 8px; text-align: right;">Totali Parziali:</td>
@@ -699,8 +737,8 @@
                         <td style="border: 1px solid #ccc; padding: 6px 8px;"></td>
                     </tr>
                     <tr style="background-color: #d4e6f1; font-weight: bold; font-size: 14px;">
-                        <td colspan="7" style="border: 1px solid #ccc; padding: 8px 10px; text-align: right; text-transform: uppercase;">Totale Generale Netto Evento:</td>
-                        <td style="border: 1px solid #ccc; padding: 8px 10px;">€ ${totaleGenerale.toFixed(2)}</td>
+                        <td colspan="7" style="border: 1px solid #ccc; padding: 6px 8px; text-align: right; text-transform: uppercase;">Totale Generale Netto Evento:</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">€ ${totaleGenerale.toFixed(2)}</td>
                     </tr>
                 </tfoot>
             </table>
