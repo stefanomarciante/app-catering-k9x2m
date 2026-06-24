@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scardaci Catering</title>
     
-    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=4">
-    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=4">
+    <link rel="icon" type="image/jpeg" href="scardaci-catering.jpg?v=5">
+    <link rel="apple-touch-icon" href="scardaci-catering.jpg?v=5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Scardaci Catering">
@@ -27,10 +27,11 @@
         .view-section { display: none; }
         .active-view { display: block; }
         h1, h2 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
-        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
@@ -49,10 +50,10 @@
         
         .staff-item { background: #f9f9f9; padding: 15px; margin-top: 10px; border: 1px solid #eee; border-radius: 5px; }
         .fasi-container { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
-        .fase-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; flex-wrap: wrap; }
-        .fase-row > div { flex: 1; min-width: 90px; }
+        .fase-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; }
+        .fase-row > div { flex: 1; }
         .btn-add { background: #2ecc71; margin-top: 10px; font-size: 12px; padding: 6px 10px; }
-        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; min-width: 40px !important; flex: 0 !important; }
+        .btn-remove { background: #e74c3c; padding: 8px; margin-top: 0; }
         
         .eventi-passati-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
         .evento-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -61,6 +62,7 @@
         .card-actions { margin-top: 15px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 10px; }
         .card-actions button { flex: 1; margin: 0; font-size: 13px; padding: 8px 5px; }
 
+        /* REGOLE DI STAMPA NATIVE PER IOS E DESKTOP */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             body { background-color: white; }
@@ -94,10 +96,14 @@
         <div><label>Nome Evento</label><input type="text" id="evento-nome"></div>
         <div><label>Luogo</label><input type="text" id="evento-luogo"></div>
         <div><label>Data</label><input type="date" id="evento-data"></div>
-        <div><label>Coperti</label><input type="number" id="evento-persone" min="1" value="0"></div>
+    </div>
+    <div class="grid-3" style="margin-top: 15px;">
+        <div><label>Coperti (Adulti)</label><input type="number" id="evento-persone" min="0" value="0"></div>
+        <div><label>Bambini</label><input type="number" id="evento-bambini" min="0" value="0"></div>
+        <div><label>Staff Esterno</label><input type="number" id="evento-staff-ext" min="0" value="0"></div>
     </div>
 
-    <h2>Assegnazione Personale</h2>
+    <h2 style="margin-top: 25px;">Assegnazione Personale</h2>
     <div id="lista-personale-assegnazione"></div>
     <button class="btn btn-save" id="btn-salva-evento">Salva Evento nel Database</button>
     <button class="btn btn-pdf" id="btn-stampa-evento" onclick="esportaPDF()">Genera Anteprima di Stampa / PDF</button>
@@ -109,7 +115,8 @@
         <button class="btn btn-danger" style="margin: 0; flex: 1; font-size: 18px;" onclick="switchView('view-eventi')">❌ Torna all'Evento</button>
     </div>
     
-    <div id="contenuto-stampa"></div>
+    <div id="contenuto-stampa">
+        </div>
 </div>
 
 <div id="view-archivio" class="container view-section">
@@ -401,9 +408,9 @@
                     <h3>${ev.nome}</h3>
                     <p><strong>Data:</strong> ${ev.data}</p>
                     <p><strong>Luogo:</strong> ${ev.luogo}</p>
-                    <p><strong>Coperti:</strong> ${ev.coperti}</p>
+                    <p><strong>Coperti:</strong> ${ev.coperti} Adulti, ${ev.bambini || 0} Bambini, ${ev.staffEsterno || 0} Staff</p>
                     <div class="card-actions">
-                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti})">Gestisci Evento / Stampa</button>
+                        <button class="btn btn-edit" onclick="modificaDaArchivio('${idEv}', '${ev.nome.replace(/'/g, "\\'")}', '${ev.luogo.replace(/'/g, "\\'")}', '${ev.data}', ${ev.coperti}, ${ev.bambini || 0}, ${ev.staffEsterno || 0})">Gestisci Evento / Stampa</button>
                         <button class="btn btn-danger" onclick="eliminaEventoCompletamente('${idEv}')">Elimina</button>
                     </div>
                 </div>
@@ -413,9 +420,9 @@
         if(griglia.innerHTML === '') griglia.innerHTML = '<p>Nessun evento archiviato.</p>';
     }
 
-    window.modificaDaArchivio = async function(id, nome, luogo, data, coperti) {
+    window.modificaDaArchivio = async function(id, nome, luogo, data, coperti, bambini, staffEsterno) {
         switchView('view-eventi');
-        await apriEvento(id, nome, luogo, data, coperti);
+        await apriEvento(id, nome, luogo, data, coperti, bambini, staffEsterno);
     };
 
     window.eliminaEventoCompletamente = async function(id) {
@@ -436,7 +443,7 @@
         }
     };
 
-    window.apriEvento = async function(id, nome, luogo, data, coperti) {
+    window.apriEvento = async function(id, nome, luogo, data, coperti, bambini = 0, staffEsterno = 0) {
         if(document.getElementById('lista-personale-assegnazione').innerHTML === '') {
             await caricaAnagraficaPerEventi();
         }
@@ -446,7 +453,11 @@
         document.getElementById('evento-luogo').value = luogo;
         document.getElementById('evento-data').value = data;
         document.getElementById('evento-persone').value = coperti;
+        document.getElementById('evento-bambini').value = bambini;
+        document.getElementById('evento-staff-ext').value = staffEsterno;
+        
         document.getElementById('titolo-sezione-evento').innerText = "Modifica Evento: " + nome;
+        document.getElementById('btn-annulla-modifica').style.display = 'block';
         window.scrollTo(0,0);
 
         document.querySelectorAll('.check-membro').forEach(chk => {
@@ -478,7 +489,11 @@
         document.getElementById('evento-luogo').value = '';
         document.getElementById('evento-data').value = '';
         document.getElementById('evento-persone').value = 0;
+        document.getElementById('evento-bambini').value = 0;
+        document.getElementById('evento-staff-ext').value = 0;
+        
         document.getElementById('titolo-sezione-evento').innerText = "Nuovo Evento";
+        document.getElementById('btn-annulla-modifica').style.display = 'none';
         
         document.querySelectorAll('.check-membro').forEach(chk => {
             chk.checked = false;
@@ -497,7 +512,9 @@
             nome: nomeEvento,
             luogo: document.getElementById('evento-luogo').value,
             data: document.getElementById('evento-data').value,
-            coperti: parseInt(document.getElementById('evento-persone').value) || 0
+            coperti: parseInt(document.getElementById('evento-persone').value) || 0,
+            bambini: parseInt(document.getElementById('evento-bambini').value) || 0,
+            staffEsterno: parseInt(document.getElementById('evento-staff-ext').value) || 0
         };
 
         try {
@@ -566,6 +583,8 @@
         const luogo = document.getElementById('evento-luogo').value || "-";
         const dataEv = document.getElementById('evento-data').value || "-";
         const coperti = document.getElementById('evento-persone').value || "0";
+        const bambini = document.getElementById('evento-bambini').value || "0";
+        const staffEsterno = document.getElementById('evento-staff-ext').value || "0";
 
         let righeTabella = '';
         let totaleAuto = 0;
@@ -652,7 +671,7 @@
             <p style="margin: 0 0 15px 0; font-size: 14px;">
                 <strong>Data Evento:</strong> ${dataEv} &nbsp;&nbsp;|&nbsp;&nbsp; 
                 <strong>Luogo:</strong> ${luogo} &nbsp;&nbsp;|&nbsp;&nbsp; 
-                <strong>Coperti:</strong> ${coperti}
+                <strong>Coperti:</strong> ${coperti} Adulti, ${bambini} Bambini, ${staffEsterno} Staff
             </p>
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.4;">
                 <thead>
