@@ -63,10 +63,17 @@
 
         /* REGOLE DI STAMPA NATIVE PER IOS/SAFARI */
         #print-area { display: none; }
+        
+        /* Quando la classe 'is-printing' è attiva sul body, nascondiamo l'app e mostriamo solo il report */
+        body.is-printing { background: white; }
+        body.is-printing > *:not(#print-area) { display: none !important; }
+        body.is-printing #print-area { display: block !important; padding: 15px; }
+
         @media print {
-            body > :not(#print-area) { display: none !important; }
-            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background: white; color: black; font-family: Arial, sans-serif; }
             @page { size: A4 landscape; margin: 10mm; }
+            body { background: white; }
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; }
         }
     </style>
 </head>
@@ -536,6 +543,7 @@
         }
     });
 
+    // Funzione Esporta PDF corretta per iOS Safari
     window.esportaPDF = function() {
         const nomeEvento = document.getElementById('evento-nome').value || "Evento Senza Nome";
         const luogo = document.getElementById('evento-luogo').value || "-";
@@ -652,8 +660,20 @@
 
         const printArea = document.getElementById('print-area');
         printArea.innerHTML = htmlStampabile;
-        window.print();
-        setTimeout(() => { printArea.innerHTML = ''; }, 1000);
+        
+        // Attiviamo la modalità stampa (nasconde l'app, mostra il report)
+        document.body.classList.add('is-printing');
+
+        // Il timeout permette all'iPhone di renderizzare il DOM prima di aprire la finestra PDF
+        setTimeout(() => {
+            window.print();
+        }, 500);
+
+        // Al termine della stampa (o se l'utente annulla), ripristiniamo la visualizzazione normale
+        window.onafterprint = () => {
+            document.body.classList.remove('is-printing');
+            printArea.innerHTML = '';
+        };
     };
 
     window.caricaResocontoStagione = async function() {
